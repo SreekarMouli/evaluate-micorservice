@@ -23,13 +23,13 @@ RUN rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Copy the server.cpp source code into the container
-COPY server.cpp /app/
+COPY ./evaluate-app /app/
 
 # Add the communication.proto file into the container (it's in the project root)
 ADD communication.proto /app/
 
 # Generate the gRPC code using protoc
-RUN protoc -I=. --cpp_out=. --grpc_out=. --plugin=protoc-gen-grpc=/path/to/grpc_cpp_plugin communication.proto
+RUN protoc -I=. --cpp_out=. --grpc_out=. --plugin=protoc-gen-grpc=/usr/bin/grpc_cpp_plugin communication.proto
 
 # Compile the server code
 RUN g++ -std=c++14 -o server server.cpp communication.grpc.pb.cc communication.pb.cc -lgrpc++ -lgrpc -lprotobuf

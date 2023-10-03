@@ -11,7 +11,11 @@ COPY requirements.txt /app/
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 # Copy the current directory contents into the container at /app
-COPY . /app/
+COPY ./web-app /app/
+
+ADD communication.proto /app/
+
+RUN python -m grpc_tools.protoc -I . --python_out=. --grpc_python_out=. communication.proto
 
 # Expose the port that the gRPC client will use (if needed)
 EXPOSE 50051

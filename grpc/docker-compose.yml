@@ -2,19 +2,21 @@ version: '3'
 services:
   evaluate-app:
     build:
-      context: ./evaluate-app # Path to the directory containing your C++ server code and Dockerfile
+      context: .
+      dockerfile: Dockerfile.evaluate-app
     ports:
       - "50051:50051" # Map the server port from the container to the host
     networks:
       - grpc-network
 
-  # web-app:
-  #   build:
-  #     context: ./web-app # Path to the directory containing your Python client code and Dockerfile
-  #   depends_on:
-  #     - evaluate-app
-  #   networks:
-  #     - grpc-network
+  web-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.web-app
+    depends_on:
+      - evaluate-app
+    networks:
+      - grpc-network
     
 
 networks:
