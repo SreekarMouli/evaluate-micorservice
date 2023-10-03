@@ -10,6 +10,9 @@ RUN apt-get update
 # Install g++ and cmake
 RUN apt-get install -y g++ cmake
 
+# Install nlohmann/json using a package manager (for Ubuntu 20.04)
+RUN apt-get install -y nlohmann-json3-dev
+
 # Install libgrpc++-dev and protobuf-compiler
 RUN apt-get install -y libgrpc++-dev protobuf-compiler
 
@@ -32,7 +35,16 @@ ADD communication.proto /app/
 RUN protoc -I=. --cpp_out=. --grpc_out=. --plugin=protoc-gen-grpc=/usr/bin/grpc_cpp_plugin communication.proto
 
 # Compile the server code
-RUN g++ -std=c++14 -o server server.cpp communication.grpc.pb.cc communication.pb.cc -lgrpc++ -lgrpc -lprotobuf
+RUN g++ \
+    -std=c++14 \
+    -o server \
+    server.cpp \
+    communication.grpc.pb.cc \
+    communication.pb.cc \
+    evaluate.h \
+    -lgrpc++ \
+    -lgrpc \
+    -lprotobuf
 
 # Expose the port that the gRPC server will listen on
 EXPOSE 50051

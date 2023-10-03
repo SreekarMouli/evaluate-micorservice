@@ -4,6 +4,8 @@
 #include <grpc++/grpc++.h>
 #include "communication.grpc.pb.h"
 #include "communication.pb.h"
+#include "nlohmann/json.hpp"
+#include "evaluate.h"
 
 
 using grpc::Server;
@@ -13,13 +15,26 @@ using grpc::Status;
 using communication::FormulaRequest;
 using communication::FormulaResponse;
 using communication::FormulaEvaluator;
+using json = nlohmann::json;
 
 // Implement your service logic here
 class FormulaEvaluatorImpl final : public FormulaEvaluator::Service {
     Status EvaluateFormula(ServerContext* context, const FormulaRequest* request, FormulaResponse* response) override {
-        // Implement your formula evaluation logic here based on the request
-        // Set the result in the response
-        response->set_result("42");  // Replace with your actual calculation
+        std::string formula = request->formula();
+        std::string row = request->data();
+        std::cout << "Received ast: " << formula << std::endl;
+        std::cout << "Received row: " << row << std::endl;
+        json ast;
+        json rowData;
+        try {
+            ast = json::parse(formula);
+            rowData = json::parse(row);
+        } catch (json::parse_error& e) {
+            std::cerr << "Error parsing JSON data: " << e.what() << std::endl;
+            return Status(grpc::INVALID_ARGUMENT, "Invalid JSON data");
+        }
+        int result = evaluate(ast, rowData);
+        response->set_result(std::to_string(result));
         return Status::OK;
     }
 };
