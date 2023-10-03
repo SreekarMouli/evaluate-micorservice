@@ -4,44 +4,93 @@
 
 using json = nlohmann::json;
 
-int plus(int arg1, int arg2) {
+int evaluate(json &ast, json &row);
+
+int plus(int arg1, int arg2)
+{
     return arg1 + arg2;
 }
-int minus(int arg1, int arg2) {
+int minus(int arg1, int arg2)
+{
     return arg1 - arg2;
 }
-int multiply(int arg1, int arg2) {
+int multiply(int arg1, int arg2)
+{
     return arg1 * arg2;
 }
-int handle_variable(const json& tok, const json& row) {
+int everMax(std::vector<int> &args)
+{
+    if (args.empty())
+    {
+        return 0;
+    }
+    return *std::max_element(args.begin(), args.end());
+}
+int handle_variable(json &tok, json &row)
+{
     std::string key = tok["id"];
-    if (row.find(key) != row.end()) {
+    if (row.find(key) != row.end())
+    {
         return row[key];
     }
     return 0;
 }
-int evaluate(json& ast, json& row) {
-    if (ast.is_object() && ast["type"] == "VARIABLE") {
-        return handle_variable(ast, row);
+int handle_function(json &tok, json &row)
+{
+    std::string func = tok["id"];
+    json &args = tok["args"];
+    std::vector<int> evaluated_args;
+    for (auto &arg : args)
+    {
+        if (arg.is_object() && arg["type"] == "VARIABLE")
+        {
+            evaluated_args.push_back(handle_variable(arg, row));
+        }
     }
-    std::string operator_str;
-    operator_str = ast.begin().key();
-    json& values = ast[operator_str];
+    if (func == "everMax")
+    {
+        return everMax(evaluated_args);
+    }
+    return 0;
+}
+int handle_operator(std::string operator_str, json &values, json &row)
+{
     std::vector<int> evaluated_values;
-    for (auto& val : values) {
-        std::cout << "val: " << val << std::endl;
+    for (auto &val : values)
+    {
         evaluated_values.push_back(evaluate(val, row));
     }
-    if (operator_str == "+") {
+    if (operator_str == "+")
+    {
         return plus(evaluated_values[0], evaluated_values[1]);
-    } else if (operator_str == "-") {
+    }
+    else if (operator_str == "-")
+    {
         return minus(evaluated_values[0], evaluated_values[1]);
-    } else if (operator_str == "*") {
+    }
+    else if (operator_str == "*")
+    {
         return multiply(evaluated_values[0], evaluated_values[1]);
     }
     return 0;
 }
-int main() {
+int evaluate(json &ast, json &row)
+{
+    if (ast.is_object() && ast["type"] == "VARIABLE")
+    {
+        return handle_variable(ast, row);
+    }
+    if (ast.is_object() && ast["type"] == "FUNCTION")
+    {
+        return handle_function(ast, row);
+    }
+    std::string operator_str;
+    operator_str = ast.begin().key();
+    json &values = ast[operator_str];
+    return handle_operator(operator_str, values, row);
+}
+int main()
+{
     json row = {
         {"id", "1"},
         {"email", "user1@mail.com"},
@@ -49,20 +98,33 @@ int main() {
         {"amount_1", 100},
         {"amount_2", 80},
         {"amount_3", 5},
-        {"amount_4", 6}
-    };
-    std::string str{ R"(
+        {"amount_4", 6},
+        {"amount_5", 1}};
+    std::string str{R"(
     {"+": [
-            {"type": "VARIABLE", "id": "amount_1"},
+            {
+                "type": "FUNCTION",
+                "id": "everMax",
+                "args": [
+                    {
+                        "type": "VARIABLE",
+                        "id": "amount_1"
+                    },
+                    {
+                        "type": "VARIABLE",
+                        "id": "amount_2"
+                    }
+                ]
+            },
             {"-": [
-                {"type": "VARIABLE", "id": "amount_2"},
+                {"type": "VARIABLE", "id": "amount_3"},
                 {"*": [
-                    {"type": "VARIABLE", "id": "amount_3"},
-                    {"type": "VARIABLE", "id": "amount_4"}
+                    {"type": "VARIABLE", "id": "amount_4"},
+                    {"type": "VARIABLE", "id": "amount_5"}
                 ]}
             ]}
         ]}
-    )" };
+    )"};
     json ast = json::parse(str);
     int res = evaluate(ast, row);
     std::cout << "Result: " << res << std::endl;
