@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+service FormulaEvaluator {
+  rpc EvaluateFormula (FormulaRequest) returns (FormulaResponse);
+}
+
+message FormulaRequest {
+  string formula = 1;
+  string data = 2;
+}
+
+message FormulaResponse {
+  string result = 1;
+}

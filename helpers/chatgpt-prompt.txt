@@ -1,0 +1,133 @@
+We have a low-code/no-code web app (based on Django Reactjs) which is used to calculated commissions. Users can login to our app and design tables (called as `datasheet`) with custom columns and data. Then, they can configure a mathematical formula using the columns of the datasheet they have defined. We support most various arithmetic operators and also provide custom functions.
+
+For example,
+
+datasheet:
+Id,Email,SaleDate,Amount1,Amount2,Amount3,Amount4,Amount5
+1,user1@mail.com,2022-01-01,100,80,5,6,1
+2,user2@mail.com,2022-01-02,200,300,400,500,600
+
+formula:
+Commission = everMax(Amount1, Amount2) + Amount3 - (Amount4 * Amount5)
+
+Here, `everMax` is a custom function that we support which will return the maximum value of the two arguments.
+
+result:
+Id,Email,SaleDate,Amount1,Amount2,Amount3,Commission
+1,user1@mail.com,2022-01-01,100,200,300,400
+2,user2@mail.com,2022-01-02,200,300,400,600
+
+Here is a simplified version of our code which takes care of evaluating the formula against one row:
+
+```py
+def plus(*args):
+    return args[0] + args[1]
+
+def minus(*args):
+    return args[0] - args[1]
+
+def multiply(*args):
+    return args[0] * args[1]
+
+def everMax(*args):
+    return max(args)
+
+def handle_variable(tok, row):
+    key = tok["id"]
+    val = row.get(key)
+    return val
+
+def handle_function(tok, row):
+    func = tok["id"]
+    args = tok["args"]
+    args = [
+        evaluate(arg, row) for arg in args
+    ]
+    if func == "everMax":
+        return everMax(*args)
+    return 0
+
+def handle_operator(operator, *values):
+    values = [
+        evaluate(val, row) for val in values
+    ]
+    if operator == "+":
+        return plus(*values)
+    elif operator == "-":
+        return minus(*values)
+    elif operator == "*":
+        return multiply(*values)
+    return 0
+
+
+def evaluate(ast, row):
+    if isinstance(ast, dict) and ast.get("type") == "VARIABLE":
+        return handle_variable(ast, row)
+    if isinstance(ast, dict) and ast.get("type") == "FUNCTION":
+        return handle_function(ast, row)
+    operator = list(ast.keys())[0]
+    return handle_operator(operator, *ast[operator])
+
+
+ast = {
+    "+": [
+        {
+            "type": "FUNCTION",
+            "id": "everMax",
+            "args": [
+                {
+                    "type": "VARIABLE",
+                    "id": "amount_1"
+                },
+                {
+                    "type": "VARIABLE",
+                    "id": "amount_2"
+                }
+            ]
+        },
+        {
+            "-": [
+                {
+                    "type": "VARIABLE",
+                    "id": "amount_3"
+                },
+                {
+                    "*": [
+                        {
+                            "type": "VARIABLE",
+                            "id": "amount_4"
+                        },
+                        {
+                            "type": "VARIABLE",
+                            "id": "amount_5"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+row = {
+    "id": "1",
+    "email": "user1@mail.com",
+    "sale_date": "2023-01-01",
+    "amount_1": 100,
+    "amount_2": 80,
+    "amount_3": 5,
+    "amount_4": 6,
+    "amount_5": 1,
+}
+res = evaluate(ast, row)
+print(res)
+```
+
+In the 1st iteration of the code architecture, a pandas dataframe was created using all the rows in tables and then we have used `evaluate` on all the rows.
+
+In the 2nd iteration, the tables were moved to snowflake and all the custom operators and functions were created as udf functions in snowflake. We are using snowflake to directly evaluate the formula against all the rows in the table.
+
+
+As part of a competition we are trying to rethink the architecture to make it more performant. I am thinking of creating a separate microservice which is responsible to evaluate the formula against a single row. This microservice will be written in cuda c++ and will be deployed on a GPU instance. We will establish a 2-sided communication between the web-app microservice (django) and evaluate-app microservice (cuda c++) using grpc where we will be transferring stringified JSONs.
+
+---
+
+// Write your question here...

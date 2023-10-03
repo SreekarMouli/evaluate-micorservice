@@ -1,0 +1,28 @@
+{
+    "+": [
+        {
+            "type": "variable",
+            "id": "amount_1"
+        },
+        {
+            "-": [
+                {
+                    "type": "variable",
+                    "id": "amount_2"
+                },
+                {
+                    "*": [
+                        {
+                            "type": "variable",
+                            "id": "amount_3"
+                        },
+                        {
+                            "type": "variable",
+                            "id": "amount_4"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

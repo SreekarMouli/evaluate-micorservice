@@ -1,0 +1,41 @@
+# Use an official image of Ubuntu as the base image
+FROM ubuntu:20.04
+
+# Set environment variables for non-interactive installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update package lists and install essential packages
+RUN apt-get update
+
+# Install g++ and cmake
+RUN apt-get install -y g++ cmake
+
+# Install libgrpc++-dev and protobuf-compiler
+RUN apt-get install -y libgrpc++-dev protobuf-compiler
+
+# Install gRPC tools, including protoc-gen-grpc
+RUN apt-get install -y protobuf-compiler-grpc
+
+# Remove package lists to minimize image size
+RUN rm -rf /var/lib/apt/lists/*
+
+# Create a directory for your server code and protobuf files
+WORKDIR /app
+
+# Copy the server.cpp source code into the container
+COPY server.cpp /app/
+
+# Add the communication.proto file into the container (it's in the project root)
+ADD communication.proto /app/
+
+# Generate the gRPC code using protoc
+RUN protoc -I=. --cpp_out=. --grpc_out=. --plugin=protoc-gen-grpc=/path/to/grpc_cpp_plugin communication.proto
+
+# Compile the server code
+RUN g++ -std=c++14 -o server server.cpp communication.grpc.pb.cc communication.pb.cc -lgrpc++ -lgrpc -lprotobuf
+
+# Expose the port that the gRPC server will listen on
+EXPOSE 50051
+
+# Define the command to run your gRPC server
+CMD ["./server"]
