@@ -1,69 +1,32 @@
+import time
 import json
 import grpc
 import communication_pb2
 import communication_pb2_grpc
 
-channel = grpc.insecure_channel('evaluate-app:50051')  # Replace with the server address
+channel = grpc.insecure_channel('evaluate-app:50051', options=[
+    ('grpc.max_send_message_length', 200 * 1024 * 1024),  # 200MB
+    ('grpc.max_receive_message_length', 200 * 1024 * 1024),  # 200MB
+])
 
 formula_evaluator_stub = communication_pb2_grpc.FormulaEvaluatorStub(channel)
 
 def send_request(ast, data):
     request = communication_pb2.FormulaRequest(formula=ast, data=data)
-    response = formula_evaluator_stub.EvaluateFormula(request)
-    print("Result:", response.result)
+    t1 = time.time()
+    formula_evaluator_stub.EvaluateFormula(request)
+    t2 = time.time()
+    print("Time taken:", t2 - t1)
 
-print("Begin")
-
-ast = {
-    "+": [
-        {
-            "type": "FUNCTION",
-            "id": "everMax",
-            "args": [
-                {
-                    "type": "VARIABLE",
-                    "id": "amount_1"
-                },
-                {
-                    "type": "VARIABLE",
-                    "id": "amount_2"
-                }
-            ]
-        },
-        {
-            "-": [
-                {
-                    "type": "VARIABLE",
-                    "id": "amount_3"
-                },
-                {
-                    "*": [
-                        {
-                            "type": "VARIABLE",
-                            "id": "amount_4"
-                        },
-                        {
-                            "type": "VARIABLE",
-                            "id": "amount_5"
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
-
-row = {
-    "id": "1",
-    "email": "user1@mail.com",
-    "sale_date": "2023-01-01",
-    "amount_1": 100,
-    "amount_2": 80,
-    "amount_3": 5,
-    "amount_4": 6,
-    "amount_5": 1,
-}
-
-send_request(json.dumps(ast), json.dumps(row))
-
-print("End")
+if __name__ == "__main__":
+    print("begin")
+    print("loading ast")
+    with open("sample_ast.json") as f:
+        ast = f.read()
+    print("loading ast done", ast)
+    print("loading data")
+    with open("large_data.json") as f:
+        data = f.read()
+    print("loading data done")
+    send_request(ast, data)
+    print("end")

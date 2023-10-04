@@ -20,21 +20,20 @@ using json = nlohmann::json;
 // Implement your service logic here
 class FormulaEvaluatorImpl final : public FormulaEvaluator::Service {
     Status EvaluateFormula(ServerContext* context, const FormulaRequest* request, FormulaResponse* response) override {
+        std::cout << "received request" << std::endl;
         std::string formula = request->formula();
-        std::string row = request->data();
-        std::cout << "Received ast: " << formula << std::endl;
-        std::cout << "Received row: " << row << std::endl;
-        json ast;
-        json rowData;
-        try {
-            ast = json::parse(formula);
-            rowData = json::parse(row);
-        } catch (json::parse_error& e) {
-            std::cerr << "Error parsing JSON data: " << e.what() << std::endl;
-            return Status(grpc::INVALID_ARGUMENT, "Invalid JSON data");
-        }
-        int result = evaluate(ast, rowData);
-        response->set_result(std::to_string(result));
+        std::string data = request->data();
+        std::cout << "ast: " << formula << std::endl;
+        std::cout << "data length: " << data.length() << std::endl;
+        json formula_json = json::parse(formula);
+        std::cout << "converting data to json" << std::endl;
+        json data_json = json::parse(data);
+        std::cout << "conversion done" << std::endl;
+        std::vector<int> result = bulk_evaluate(formula_json, data_json);
+        std::cout << "obtained result" << std::endl;
+        nlohmann::json result_json(result);
+        std::string result_json_string = result_json.dump();
+        response->set_result(result_json_string);
         return Status::OK;
     }
 };
@@ -45,6 +44,7 @@ int main() {
     FormulaEvaluatorImpl service;
 
     ServerBuilder builder;
+    builder.SetMaxReceiveMessageSize(200 * 1024 * 1024);  // 200MB
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
 

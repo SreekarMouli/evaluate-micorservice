@@ -44,7 +44,8 @@ RUN g++ \
     evaluate.h \
     -lgrpc++ \
     -lgrpc \
-    -lprotobuf
+    -lprotobuf \
+    -O3
 
 # Expose the port that the gRPC server will listen on
 EXPOSE 50051

@@ -89,3 +89,14 @@ int evaluate(json &ast, json &row)
     json &values = ast[operator_str];
     return handle_operator(operator_str, values, row);
 }
+std::vector<int> bulk_evaluate(json &ast, json &rows)
+{
+    std::vector<int> results;
+    std::cout << "BEGIN" << std::endl;
+    for (auto &row : rows)
+    {
+        results.push_back(evaluate(ast, row));
+    }
+    std::cout << "END" << std::endl;
+    return results;
+}
