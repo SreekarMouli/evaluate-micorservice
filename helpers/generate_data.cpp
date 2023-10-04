@@ -40,7 +40,8 @@ int main() {
         outfile << "\"amount_1\":" << (rand() % 1000) + 10 << ",";
         outfile << "\"amount_2\":" << (rand() % 1000) + 10 << ",";
         outfile << "\"amount_3\":" << (rand() % 1000) + 10 << ",";
-        outfile << "\"amount_4\":" << (rand() % 1000) + 10 << "}";
+        outfile << "\"amount_4\":" << (rand() % 1000) + 10 << ",";
+        outfile << "\"amount_5\":" << (rand() % 1000) + 10 << "}";
 
         // Print progress
         if (i % 1000 == 0)

@@ -1,3 +1,7 @@
+import time
+import json
+import pandas as pd
+
 def plus(*args):
     return args[0] + args[1]
 
@@ -25,7 +29,7 @@ def handle_function(tok, row):
         return everMax(*args)
     return 0
 
-def handle_operator(operator, *values):
+def handle_operator(operator, values, row):
     values = [
         evaluate(val, row) for val in values
     ]
@@ -37,63 +41,31 @@ def handle_operator(operator, *values):
         return multiply(*values)
     return 0
 
-
 def evaluate(ast, row):
     if isinstance(ast, dict) and ast.get("type") == "VARIABLE":
         return handle_variable(ast, row)
     if isinstance(ast, dict) and ast.get("type") == "FUNCTION":
         return handle_function(ast, row)
     operator = list(ast.keys())[0]
-    return handle_operator(operator, *ast[operator])
+    return handle_operator(operator, ast[operator], row)
+
+def bulk_evaluate(ast, data):
+    df = pd.DataFrame(data)
+    res = []
+    print("BEGIN")
+    t1 = time.time()
+    res = df.apply(lambda row: evaluate(ast, row), axis=1)
+    t2 = time.time()
+    print("END, Time taken: ", t2 - t1)
 
 
-ast = {
-    "+": [
-        {
-            "type": "FUNCTION",
-            "id": "everMax",
-            "args": [
-                {
-                    "type": "VARIABLE",
-                    "id": "amount_1"
-                },
-                {
-                    "type": "VARIABLE",
-                    "id": "amount_2"
-                }
-            ]
-        },
-        {
-            "-": [
-                {
-                    "type": "VARIABLE",
-                    "id": "amount_3"
-                },
-                {
-                    "*": [
-                        {
-                            "type": "VARIABLE",
-                            "id": "amount_4"
-                        },
-                        {
-                            "type": "VARIABLE",
-                            "id": "amount_5"
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
-row = {
-    "id": "1",
-    "email": "user1@mail.com",
-    "sale_date": "2023-01-01",
-    "amount_1": 100,
-    "amount_2": 80,
-    "amount_3": 5,
-    "amount_4": 6,
-    "amount_5": 1,
-}
-res = evaluate(ast, row)
-print(res)
+if __name__ == "__main__":
+    print("loading ast")
+    with open("sample_ast.json") as f:
+        ast = json.load(f)
+    print("loading ast done", ast)
+    print("loading data")
+    with open("large_data.json") as f:
+        data = json.load(f)
+    print("loading data done")
+    bulk_evaluate(ast, data)

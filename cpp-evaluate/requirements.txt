@@ -3,4 +3,9 @@ grpcio-tools==1.59.0
 llvmlite==0.41.0
 numba==0.58.0
 numpy==1.25.2
+pandas==2.1.1
 protobuf==4.24.3
+python-dateutil==2.8.2
+pytz==2023.3.post1
+six==1.16.0
+tzdata==2023.3

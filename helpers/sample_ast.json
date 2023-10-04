@@ -1,24 +1,34 @@
 {
     "+": [
         {
-            "type": "variable",
-            "id": "amount_1"
+            "type": "FUNCTION",
+            "id": "everMax",
+            "args": [
+                {
+                    "type": "VARIABLE",
+                    "id": "amount_1"
+                },
+                {
+                    "type": "VARIABLE",
+                    "id": "amount_2"
+                }
+            ]
         },
         {
             "-": [
                 {
-                    "type": "variable",
-                    "id": "amount_2"
+                    "type": "VARIABLE",
+                    "id": "amount_3"
                 },
                 {
                     "*": [
                         {
-                            "type": "variable",
-                            "id": "amount_3"
+                            "type": "VARIABLE",
+                            "id": "amount_4"
                         },
                         {
-                            "type": "variable",
-                            "id": "amount_4"
+                            "type": "VARIABLE",
+                            "id": "amount_5"
                         }
                     ]
                 }
